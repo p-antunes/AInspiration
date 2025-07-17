@@ -3,101 +3,107 @@
 import { useState } from 'react';
 
 export default function Home() {
-  const [sentimento, setSentimento] = useState('');
-  const [imagem, setImagem] = useState('');
-  const [estilo, setEstilo] = useState('inspiradora');
-  const [resultado, setResultado] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ mood: '', location: '', style: '' });
+  const [generatedText, setGeneratedText] = useState('');
 
-  const gerarFrases = async () => {
-    setLoading(true);
-    setResultado('');
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    const prompt = `Gera 3 frases ${estilo} para usar como legenda numa publicação sobre ${imagem}, refletindo um sentimento de ${sentimento}.`;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
 
-      const data = await res.json();
-      setResultado(data.text || 'Erro ao gerar resposta.');
-    } catch (err) {
-      console.error('Erro ao gerar frases:', err);
-      setResultado('Ocorreu um erro. Tenta novamente.');
-    }
-
-    setLoading(false);
+    const data = await response.json();
+    setGeneratedText(data.result);
   };
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>Gerador de Frases para Publicações</h1>
+    <main className="min-h-screen flex flex-col justify-between bg-white text-black relative overflow-hidden">
+      <header className="flex justify-between items-center py-4 px-8 bg-[#f8f8f8] shadow-md z-10 relative">
+        <h1 className="text-3xl font-bold">
+          <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text">AI</span>
+          nspire
+        </h1>
+      </header>
 
-      <label>Como te sentes?</label>
-      <input
-        type="text"
-        value={sentimento}
-        onChange={(e) => setSentimento(e.target.value)}
-        placeholder="ex: nostálgico, feliz, em paz..."
-        style={{ width: '100%', marginBottom: '1rem' }}
-      />
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/background.jpg"
+          alt="background"
+          className="w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/50 to-white/80"></div>
+      </div>
 
-      <label>O que aparece na imagem?</label>
-      <input
-        type="text"
-        value={imagem}
-        onChange={(e) => setImagem(e.target.value)}
-        placeholder="ex: pôr-do-sol, amigos, mar..."
-        style={{ width: '100%', marginBottom: '1rem' }}
-      />
+      <div className="flex flex-col lg:flex-row items-center justify-center flex-grow px-4 py-12 gap-16 max-w-6xl mx-auto relative z-10">
+        <div className="flex-1 space-y-8 text-center lg:text-left">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Vamos criar a descrição para a sua publicação!</h2>
+          </div>
 
-      <label>Estilo da frase</label>
-      <select
-        value={estilo}
-        onChange={(e) => setEstilo(e.target.value)}
-        style={{ width: '100%', marginBottom: '1rem' }}
-      >
-        <option value="inspiradora">Inspiradora</option>
-        <option value="engraçada">Engraçada</option>
-        <option value="romântica">Romântica</option>
-        <option value="profunda">Profunda</option>
-        <option value="feliz">Feliz</option>
-      </select>
-
-      <button onClick={gerarFrases} disabled={loading}>
-        {loading ? 'A gerar...' : 'Gerar frases'}
-      </button>
-
-      {resultado && (
-  <div style={{ marginTop: '2rem' }}>
-    <h3>Resultado:</h3>
-    <ul style={{ listStyle: 'decimal', paddingLeft: '1.5rem' }}>
-      {resultado
-        .split('\n')
-        .filter((linha) => linha.trim() !== '')
-        .map((frase, idx) => (
-          <li key={idx} style={{ marginBottom: '1rem' }}>
-            <span>{frase.trim()}</span>
+          <form
+            onSubmit={handleSubmit}
+            className="w-full p-6 rounded-2xl shadow-md space-y-4 max-w-sm mx-auto lg:mx-0 bg-white border border-gray-300 backdrop-blur-sm"
+          >
+            <input
+              type="text"
+              name="location"
+              onChange={handleChange}
+              placeholder="Onde tirou a sua fotografia ou vídeo?"
+              className="w-full border border-gray-300 px-4 py-2 rounded-md text-sm bg-white text-black placeholder:text-gray-500"
+              required
+            />
+            <input
+              type="text"
+              name="mood"
+              onChange={handleChange}
+              placeholder="Como se sente?"
+              className="w-full border border-gray-300 px-4 py-2 rounded-md text-sm bg-white text-black placeholder:text-gray-500"
+              required
+            />
+            <input
+              type="text"
+              name="style"
+              onChange={handleChange}
+              placeholder="Que estilo queres para a tua frase?"
+              className="w-full border border-gray-300 px-4 py-2 rounded-md text-sm bg-white text-black placeholder:text-gray-500"
+              required
+            />
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(frase.trim());
-              }}
-              style={{
-                marginLeft: '1rem',
-                padding: '0.25rem 0.5rem',
-                cursor: 'pointer',
-              }}
+              type="submit"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-5 py-2 rounded-full text-sm font-semibold w-full"
             >
-              Copiar
+              Gerar Descrição
             </button>
-          </li>
-        ))}
-    </ul>
-  </div>
-)}
+          </form>
+
+          {generatedText && (
+            <div className="w-full bg-white p-4 rounded-xl shadow-inner text-sm text-black border border-gray-300 max-w-sm mx-auto lg:mx-0">
+              {generatedText}
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1">
+          <img
+            src="/mockup.png"
+            alt="exemplo de rede social"
+            className="w-full max-w-sm mx-auto rounded-xl shadow-lg"
+          />
+        </div>
+      </div>
+
+      <footer className="w-full text-center text-xs text-gray-500 py-6 bg-[#f8f8f8] relative z-10">
+        © 2025 AInspire · Desenvolvido por Pedro Antunes
+      </footer>
     </main>
   );
 }

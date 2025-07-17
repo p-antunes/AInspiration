@@ -1,30 +1,33 @@
-import { CohereClient } from 'cohere-ai';
 import { NextResponse } from 'next/server';
+import { CohereClient } from 'cohere-ai';
 
 const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY || '',
+  token: process.env.COHERE_API_KEY!,
 });
 
 export async function POST(req: Request) {
+  const { mood, location, style } = await req.json();
+
+  const prompt = `Cria uma legenda criativa para redes sociais com base nas seguintes informações:
+- Local: ${location}
+- Emoção: ${mood}
+- Estilo: ${style}`;
+
   try {
-    const { prompt } = await req.json();
-
-    if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json({ error: 'Prompt inválido' }, { status: 400 });
-    }
-
-    const response = await cohere.generate({
-      model: 'command',
-      prompt,
-      max_tokens: 150,
+    const response = await cohere.chat({
+      model: 'command-r', // ou 'command-r-plus' se tiveres acesso
+      message: prompt,
     });
 
-    return NextResponse.json({ text: response.generations[0].text });
+    const generated = response.text;
+
+    return NextResponse.json({ result: generated });
   } catch (error) {
-    console.error('Erro Cohere:', error);
-    return NextResponse.json({ error: 'Erro ao contactar Cohere' }, { status: 500 });
+    console.error('Erro ao gerar descrição:', error);
+    return NextResponse.json({ error: 'Erro ao gerar descrição' }, { status: 500 });
   }
 }
+
 
 
 
